@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Zuzu Games · Pixel oyunlar</title>
+<meta name="description" content="Zuzu Games: tarayıcıda hemen oynayabileceğin pixel art oyunlar.">
+<link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="/"><img src="/assets/logo.svg" alt="Zuzu Games logo"><span class="px">ZUZU<em>GAMES</em></span></a>
+    <nav class="links">
+      <a href="/games/">Oyunlar</a>
+      <a href="/#hakkinda">Hakkında</a>
+      <a href="/#iletisim">İletişim</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="field" id="field"></div>
+    <div class="wrap">
+      <h1>Küçük pikseller,<br><b>büyük eğlence.</b></h1>
+      <p>Zuzu Games'in pixel art oyunları. İndirmek yok, kurulum yok. Tarayıcını aç ve oynamaya başla.</p>
+      <div class="btns">
+        <a class="btn primary" href="/games/">Oyunları keşfet</a>
+        <a class="btn" href="#hakkinda">Biz kimiz?</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="oyunlar">
+    <div class="wrap">
+      <div class="head">
+        <h2>Öne çıkan oyunlar</h2>
+        <a href="/games/">Tümünü gör →</a>
+      </div>
+      <div class="grid" id="featured"></div>
+    </div>
+  </section>
+
+  <section class="block" id="hakkinda">
+    <div class="wrap about">
+      <div>
+        <h2>Hakkında</h2>
+        <p>Zuzu Games, pixel art oyunlar yapan küçük bir bağımsız stüdyo. Basit kontroller, sevimli görseller ve "bir tur daha" dedirten oynanış hedefliyoruz.</p>
+        <p>Tüm oyunlar doğrudan tarayıcıda çalışır, her cihazdan açıp oynayabilirsin.</p>
+      </div>
+      <img class="logo-big" src="/assets/logo.svg" alt="Zuzu Games">
+    </div>
+  </section>
+
+  <section class="block" id="iletisim" style="border-bottom:0">
+    <div class="wrap">
+      <div class="head"><h2>İletişim</h2></div>
+      <p style="color:var(--muted);margin-bottom:20px">Geri bildirim, hata bildirimi veya iş birliği için yaz:</p>
+      <!-- E-posta adresini kendi adresinle değiştir -->
+      <a class="btn" href="mailto:merhaba@siteadresin.com">merhaba@siteadresin.com</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© <span id="yr"></span> Zuzu Games</span>
+    <span>Pixel ile yapıldı ▪</span>
+  </div>
+</footer>
+
+<script src="/app.js"></script>
+<script>
+  document.getElementById('yr').textContent = new Date().getFullYear();
+  pixelField(document.getElementById('field'));
+  fetchGames().then(all => {
+    const feat = all.filter(g => g.featured);
+    const list = (feat.length ? feat : all).slice(0, 3);
+    renderGames(document.getElementById('featured'), list, 'Yakında ilk oyunumuz geliyor. Takipte kal!');
+  });
+</script>
+</body>
+</html>

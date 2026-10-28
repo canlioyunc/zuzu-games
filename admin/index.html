@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Admin · Zuzu Games</title>
+<link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+<style>
+  .box{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px}
+  label{display:block;font-size:13px;color:var(--muted);margin:16px 0 6px}
+  input[type=text],input[type=password],textarea{width:100%;padding:11px 14px;background:var(--bg);border:1px solid var(--line);border-radius:10px;color:var(--text);font:inherit;font-size:14px}
+  input:focus,textarea:focus{outline:none;border-color:var(--accent)}
+  textarea{min-height:84px;resize:vertical}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .chk{display:flex;gap:18px;margin-top:18px;font-size:14px}
+  .chk label{display:flex;align-items:center;gap:8px;margin:0;color:var(--text)}
+  .item{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--line)}
+  .item:last-child{border:0}
+  .item img{width:72px;height:45px;object-fit:cover;image-rendering:pixelated;border-radius:6px;background:#0e0e14;flex:none}
+  .item .meta{flex:1;min-width:0}
+  .item .meta b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .item .meta small{color:var(--muted)}
+  .acts{display:flex;gap:6px;flex-wrap:wrap}
+  .off{opacity:.45}
+  .msg{margin-top:14px;font-size:14px;min-height:20px}
+  .msg.err{color:#ff7a8a}.msg.ok{color:var(--accent)}
+  .preview{width:160px;aspect-ratio:16/10;object-fit:cover;image-rendering:pixelated;border-radius:8px;border:1px solid var(--line);margin-top:10px;background:#0e0e14}
+  .cols{display:grid;grid-template-columns:1.1fr 1fr;gap:24px;align-items:start}
+  @media(max-width:860px){.cols,.row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="/"><img src="/assets/logo.svg" alt=""><span class="px">ZUZU<em>ADMIN</em></span></a>
+    <nav class="links"><a href="/games/" target="_blank">Siteyi gör</a><a href="#" id="logout" hidden>Çıkış</a></nav>
+  </div>
+</header>
+
+<main class="wrap" style="padding-top:48px;padding-bottom:80px">
+
+  <div id="login" style="max-width:380px;margin:60px auto">
+    <div class="box">
+      <h2 style="margin-bottom:4px">Giriş</h2>
+      <label for="pw">Admin şifresi</label>
+      <input type="password" id="pw" autocomplete="current-password">
+      <button class="btn primary" id="go" style="margin-top:20px;width:100%;justify-content:center">Giriş yap</button>
+      <div class="msg err" id="loginMsg"></div>
+    </div>
+  </div>
+
+  <div id="panel" hidden>
+    <div class="cols">
+      <div class="box">
+        <div class="head" style="margin-bottom:8px"><h2 style="font-size:20px">Oyunlar</h2><span id="count" style="color:var(--muted);font-size:14px"></span></div>
+        <div id="items"></div>
+      </div>
+
+      <div class="box">
+        <h2 style="font-size:20px" id="formTitle">Yeni oyun ekle</h2>
+        <form id="form">
+          <label>Oyun adı</label>
+          <input type="text" id="title" required maxlength="80">
+          <div class="row">
+            <div>
+              <label>Klasör adı (slug)</label>
+              <input type="text" id="slug" required maxlength="60" placeholder="ornek-oyun">
+            </div>
+            <div>
+              <label>Etiketler (virgülle)</label>
+              <input type="text" id="tags" placeholder="platform, macera">
+            </div>
+          </div>
+          <label>Oyun adresi</label>
+          <input type="text" id="url" required placeholder="/games/ornek-oyun/">
+          <label>Açıklama</label>
+          <textarea id="desc" maxlength="400"></textarea>
+          <label>Kapak görseli (PNG/JPG)</label>
+          <input type="file" id="file" accept="image/*" style="font-size:13px;color:var(--muted)">
+          <img id="prev" class="preview" hidden alt="">
+          <div class="chk">
+            <label><input type="checkbox" id="featured"> Ana sayfada öne çıkar</label>
+            <label><input type="checkbox" id="visible" checked> Sitede görünür</label>
+          </div>
+          <div class="btns" style="margin-top:22px">
+            <button class="btn primary" type="submit" id="save">Kaydet</button>
+            <button class="btn" type="button" id="reset">Temizle</button>
+          </div>
+          <div class="msg" id="msg"></div>
+        </form>
+        <p style="color:var(--muted);font-size:13px;margin-top:18px">Oyun dosyalarını (index.html vb.) <code>games/&lt;klasör-adı&gt;/</code> içine koyup siteyi yayınlaman gerekir. Buradan sadece kartı yönetirsin.</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+let token = sessionStorage.getItem('zz_token') || '';
+let games = [];
+let editId = null;
+let thumb = '';
+let slugTouched = false, urlTouched = false;
+
+const slugify = s => s.toLowerCase()
+  .replace(/ç/g,'c').replace(/ğ/g,'g').replace(/ı/g,'i').replace(/ö/g,'o').replace(/ş/g,'s').replace(/ü/g,'u')
+  .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+
+function say(text, kind, id = 'msg') { const m = $('#' + id); m.textContent = text; m.className = 'msg ' + (kind || ''); }
+
+async function api(method, body) {
+  return fetch('/api/games' + (method === 'GET' ? '?all=1' : ''), {
+    method,
+    headers: { authorization: 'Bearer ' + token, 'content-type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+}
+
+async function load() {
+  const r = await api('GET');
+  if (r.status === 401) { token = ''; sessionStorage.removeItem('zz_token'); showLogin(); return false; }
+  if (!r.ok) { say('Sunucu hatası: ' + r.status, 'err', 'loginMsg'); return false; }
+  games = await r.json();
+  showPanel();
+  render();
+  return true;
+}
+
+function showLogin() { $('#login').hidden = false; $('#panel').hidden = true; $('#logout').hidden = true; }
+function showPanel() { $('#login').hidden = true; $('#panel').hidden = false; $('#logout').hidden = false; }
+
+$('#go').onclick = async () => {
+  token = $('#pw').value;
+  say('', '', 'loginMsg');
+  const ok = await load();
+  if (ok) sessionStorage.setItem('zz_token', token);
+  else if (!$('#loginMsg').textContent) say('Şifre yanlış.', 'err', 'loginMsg');
+};
+$('#pw').addEventListener('keydown', e => { if (e.key === 'Enter') $('#go').click(); });
+$('#logout').onclick = e => { e.preventDefault(); token = ''; sessionStorage.removeItem('zz_token'); $('#pw').value = ''; showLogin(); };
+
+async function persist(next, okText) {
+  const r = await api('PUT', next);
+  if (r.status === 401) { showLogin(); return false; }
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) { say(data.error || 'Kaydedilemedi', 'err'); return false; }
+  games = data; render(); say(okText, 'ok');
+  return true;
+}
+
+function render() {
+  $('#count').textContent = games.length + ' oyun';
+  const box = $('#items');
+  box.replaceChildren();
+  if (!games.length) {
+    const d = document.createElement('div'); d.className = 'empty'; d.textContent = 'Henüz oyun yok. Sağdan ekle.';
+    box.appendChild(d); return;
+  }
+  games.forEach((g, i) => {
+    const row = document.createElement('div'); row.className = 'item' + (g.visible ? '' : ' off');
+    const img = document.createElement('img'); img.src = g.thumb || '/assets/logo.svg'; img.alt = '';
+    const meta = document.createElement('div'); meta.className = 'meta';
+    const b = document.createElement('b'); b.textContent = (g.featured ? '★ ' : '') + g.title;
+    const s = document.createElement('small'); s.textContent = g.url + (g.visible ? '' : ' · gizli');
+    meta.append(b, s);
+    const acts = document.createElement('div'); acts.className = 'acts';
+    const mk = (t, fn, cls = '') => { const x = document.createElement('button'); x.className = 'btn sm ' + cls; x.textContent = t; x.type = 'button'; x.onclick = fn; acts.appendChild(x); };
+    mk('↑', () => move(i, -1)); mk('↓', () => move(i, 1));
+    mk('Düzenle', () => edit(g));
+    mk('Sil', () => del(g), 'danger');
+    row.append(img, meta, acts);
+    box.appendChild(row);
+  });
+}
+
+function move(i, d) {
+  const j = i + d; if (j < 0 || j >= games.length) return;
+  const next = games.slice(); [next[i], next[j]] = [next[j], next[i]];
+  persist(next, 'Sıra güncellendi.');
+}
+
+function del(g) {
+  if (!confirm('"' + g.title + '" silinsin mi? (Oyun dosyaları silinmez, sadece kart kalkar.)')) return;
+  persist(games.filter(x => x.id !== g.id), 'Silindi.');
+}
+
+function edit(g) {
+  editId = g.id; thumb = g.thumb || '';
+  $('#formTitle').textContent = 'Oyunu düzenle';
+  $('#title').value = g.title; $('#slug').value = g.slug; $('#url').value = g.url;
+  $('#tags').value = (g.tags || []).join(', '); $('#desc').value = g.description || '';
+  $('#featured').checked = !!g.featured; $('#visible').checked = g.visible !== false;
+  slugTouched = urlTouched = true;
+  setPrev(); say('');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function resetForm() {
+  editId = null; thumb = ''; slugTouched = urlTouched = false;
+  $('#form').reset(); $('#visible').checked = true;
+  $('#formTitle').textContent = 'Yeni oyun ekle';
+  setPrev();
+}
+$('#reset').onclick = () => { resetForm(); say(''); };
+
+function setPrev() { const p = $('#prev'); if (thumb) { p.src = thumb; p.hidden = false; } else p.hidden = true; }
+
+$('#title').addEventListener('input', () => {
+  if (!slugTouched) $('#slug').value = slugify($('#title').value);
+  if (!urlTouched) $('#url').value = $('#slug').value ? '/games/' + $('#slug').value + '/' : '';
+});
+$('#slug').addEventListener('input', () => {
+  slugTouched = true;
+  if (!urlTouched) $('#url').value = $('#slug').value ? '/games/' + $('#slug').value + '/' : '';
+});
+$('#url').addEventListener('input', () => { urlTouched = true; });
+
+$('#file').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  const img = new Image();
+  img.onload = () => {
+    const s = Math.min(1, 640 / img.width);
+    const c = document.createElement('canvas');
+    c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+    const x = c.getContext('2d'); x.imageSmoothingEnabled = false;
+    x.drawImage(img, 0, 0, c.width, c.height);
+    thumb = c.toDataURL('image/png');
+    URL.revokeObjectURL(img.src);
+    setPrev();
+  };
+  img.onerror = () => say('Görsel okunamadı.', 'err');
+  img.src = URL.createObjectURL(f);
+});
+
+$('#form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const slug = slugify($('#slug').value);
+  const g = {
+    id: editId || crypto.randomUUID(),
+    title: $('#title').value.trim(),
+    slug,
+    url: $('#url').value.trim(),
+    description: $('#desc').value.trim(),
+    tags: $('#tags').value.split(',').map(t => t.trim()).filter(Boolean),
+    thumb,
+    featured: $('#featured').checked,
+    visible: $('#visible').checked,
+  };
+  if (!/^(\/(?!\/)|https:\/\/)/.test(g.url)) return say('Adres "/" ile veya "https://" ile başlamalı.', 'err');
+  if (games.some(x => x.slug === g.slug && x.id !== g.id)) return say('Bu klasör adı zaten var.', 'err');
+  const next = editId ? games.map(x => x.id === editId ? g : x) : [...games, g];
+  const ok = await persist(next, editId ? 'Güncellendi.' : 'Eklendi.');
+  if (ok) { const t = $('#msg').textContent; resetForm(); say(t, 'ok'); }
+});
+
+if (token) load();
+</script>
+</body>
+</html>

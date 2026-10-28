@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Oyunlar · Zuzu Games</title>
+<link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="/"><img src="/assets/logo.svg" alt="Zuzu Games logo"><span class="px">ZUZU<em>GAMES</em></span></a>
+    <nav class="links">
+      <a href="/games/" class="on">Oyunlar</a>
+      <a href="/#hakkinda">Hakkında</a>
+      <a href="/#iletisim">İletişim</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div class="page-title">
+      <h1>Oyunlar</h1>
+      <p>Hepsi tarayıcıda, hemen oynanır.</p>
+    </div>
+    <input class="search" id="q" type="search" placeholder="Oyun ara..." style="margin-bottom:28px">
+    <div class="grid" id="list" style="margin-bottom:80px"></div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© <span id="yr"></span> Zuzu Games</span>
+    <span>Pixel ile yapıldı ▪</span>
+  </div>
+</footer>
+
+<script src="/app.js"></script>
+<script>
+  document.getElementById('yr').textContent = new Date().getFullYear();
+  let all = [];
+  const list = document.getElementById('list');
+  function draw() {
+    const q = document.getElementById('q').value.trim().toLowerCase();
+    const f = all.filter(g => !q || (g.title + ' ' + (g.tags || []).join(' ') + ' ' + g.description).toLowerCase().includes(q));
+    renderGames(list, f, q ? 'Sonuç bulunamadı.' : 'Yakında yeni oyunlar geliyor.');
+  }
+  document.getElementById('q').addEventListener('input', draw);
+  fetchGames().then(g => { all = g; draw(); });
+</script>
+</body>
+</html>
